@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 
 from core.config import get_settings
 from core.logger import setup_logging
-from database.database import init_db
+from database.database import init_db, close_db
 from modules.b2b_proposal.router import router as proposal_router
 from modules.whatsapp_bot.router import router as whatsapp_router
 
@@ -40,6 +40,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    await close_db()
     logger.info("Raveya AI shutting down.")
 
 
@@ -106,12 +107,11 @@ async def debug_config():
     """Shows whether critical env vars are configured (values masked)."""
     return {
         "ai_provider": settings.ai_provider,
-        "groq_api_key_set": bool(settings.groq_api_key),
-        "groq_model": settings.groq_model,
         "openai_api_key_set": bool(settings.openai_api_key),
+        "groq_api_key_set": bool(settings.groq_api_key),
         "openai_model": settings.openai_model,
+        "mongodb_connected": bool(settings.mongodb_url),
         "app_env": settings.app_env,
-        "database_url": settings.database_url,
         "twilio_configured": bool(settings.twilio_account_sid),
     }
 

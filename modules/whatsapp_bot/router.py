@@ -8,7 +8,7 @@ Two integration modes:
 import logging
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import Response
-from sqlalchemy.ext.asyncio import AsyncSession
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from database.database import get_db
 from modules.whatsapp_bot import service
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/v1/whatsapp", tags=["WhatsApp Support Bot"])
 @router.post("/webhook", include_in_schema=True)
 async def twilio_webhook(
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """
     Twilio WhatsApp Webhook endpoint.
@@ -58,7 +58,7 @@ async def twilio_webhook(
 @router.post("/message", response_model=BotReply, status_code=200)
 async def send_direct_message(
     body: DirectMessageRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """
     Direct JSON endpoint — test the bot without Twilio.
@@ -76,7 +76,7 @@ async def send_direct_message(
 async def get_conversations(
     phone_number: str,
     limit: int = Query(50, ge=1, le=200),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """
     Retrieve full conversation history for a phone number.
@@ -88,7 +88,7 @@ async def get_conversations(
 @router.get("/orders/{order_number}", response_model=OrderStatusResponse)
 async def get_order_status(
     order_number: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Direct order status lookup by order number."""
     result = await service.get_order_status(order_number.upper(), db)

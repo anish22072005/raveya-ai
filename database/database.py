@@ -1,42 +1,45 @@
 """
-SQLAlchemy async engine and session factory.
+MongoDB async client using Motor.
 """
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from core.config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(
-    settings.database_url,
-    echo=False,
-    connect_args={"check_same_thread": False},
-)
-
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+_client: AsyncIOMotorClient | None = None
 
 
-class Base(DeclarativeBase):
-    pass
+def get_client() -> AsyncIOMotorClient:
+    global _client
+    if _client is None:
+        _client = AsyncIOMotorClient(settings.mongodb_url)
+    return _client
+
+
+def get_database() -> AsyncIOMotorDatabase:
+    return get_client()[settings.mongodb_db_name]
 
 
 async def get_db():
-    """FastAPI dependency that yields an async DB session."""
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
+    """FastAPI dependency that returns the MongoDB database."""
+    yield get_database()
 
 
 async def init_db():
-    """Create all tables (called at startup)."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    """Create MongoDB indexes."""
+    db = get_database()
+    await db["orders"].create_index("order_number", unique=True)
+    await db["orders"].create_index("customer_phone")
+    await db["whatsapp_conversations"].create_index("phone_number")
+    await db["whatsapp_conversations"].create_index("created_at")
+    await db["b2b_proposals"].create_index("created_at")
+    await db["ai_logs"].create_index("module")
+
+
+async def close_db():
+    """Close MongoDB connection on shutdown."""
+    global _client
+    if _client:
+        _client.close()
+        _client = None

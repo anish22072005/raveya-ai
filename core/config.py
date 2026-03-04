@@ -7,7 +7,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # AI Provider — supports "openai" or "groq" (free)
-    ai_provider: str = "groq"
+    ai_provider: str = "openai"
 
     # OpenAI
     openai_api_key: str = ""
@@ -22,8 +22,9 @@ class Settings(BaseSettings):
     twilio_auth_token: str = ""
     twilio_whatsapp_from: str = "whatsapp:+14155238886"
 
-    # Database
-    database_url: str = "sqlite+aiosqlite:///./raveya.db"
+    # MongoDB
+    mongodb_url: str = "mongodb://localhost:27017"
+    mongodb_db_name: str = "raveya"
 
     # App
     app_env: str = "development"
