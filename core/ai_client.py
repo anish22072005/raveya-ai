@@ -1,5 +1,5 @@
 """
-Centralised AI client wrapper — supports OpenAI and Groq (free).
+Centralised AI client wrapper — supports OpenAI, Groq (free), and Gemini (free).
 All AI calls go through this module so logging, retries, and model
 selection are handled in one place.
 """
@@ -26,6 +26,11 @@ def get_client() -> AsyncOpenAI:
                 api_key=settings.groq_api_key,
                 base_url="https://api.groq.com/openai/v1",
             )
+        elif settings.ai_provider == "gemini":
+            _client = AsyncOpenAI(
+                api_key=settings.gemini_api_key,
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            )
         else:
             # Support both OPENAI_API_KEY and OPENAI_KEY env var names
             api_key = settings.openai_api_key or settings.openai_key
@@ -36,6 +41,8 @@ def get_client() -> AsyncOpenAI:
 def get_model() -> str:
     if settings.ai_provider == "groq":
         return settings.groq_model
+    if settings.ai_provider == "gemini":
+        return settings.gemini_model
     return settings.openai_model
 
 
@@ -64,17 +71,20 @@ async def chat_completion(
         {"role": "user", "content": user_prompt},
     ]
 
-    response_format_obj = (
-        {"type": "json_object"} if response_format == "json_object" else {"type": "text"}
-    )
-
-    completion = await client.chat.completions.create(
+    # Gemini's OpenAI-compatible endpoint does not support response_format;
+    # the system prompt already instructs it to reply with JSON.
+    kwargs: dict = dict(
         model=get_model(),
         messages=messages,
         temperature=temperature,
         max_tokens=max_tokens,
-        response_format=response_format_obj,
     )
+    if settings.ai_provider != "gemini":
+        kwargs["response_format"] = (
+            {"type": "json_object"} if response_format == "json_object" else {"type": "text"}
+        )
+
+    completion = await client.chat.completions.create(**kwargs)
 
     elapsed = round(time.perf_counter() - start, 3)
     raw = completion.choices[0].message.content or "{}"

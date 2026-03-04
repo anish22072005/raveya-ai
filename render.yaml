@@ -7,9 +7,13 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: AI_PROVIDER
-        value: openai
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false          # fill in Render dashboard — get free key at aistudio.google.com
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
       - key: OPENAI_API_KEY
-        sync: false          # fill in Render dashboard
+        sync: false          # optional fallback
       - key: OPENAI_MODEL
         value: gpt-4o-mini
       - key: MONGODB_URL

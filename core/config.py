@@ -6,8 +6,8 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    # AI Provider — supports "openai" or "groq" (free)
-    ai_provider: str = "openai"
+    # AI Provider — supports "openai", "groq" (free), "gemini" (free)
+    ai_provider: str = "gemini"
 
     # OpenAI (accepts OPENAI_API_KEY or OPENAI_KEY)
     openai_api_key: str = ""   # set via OPENAI_API_KEY
@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     # Groq (free — https://console.groq.com)
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
+
+    # Gemini (free — https://aistudio.google.com)
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.0-flash"
 
     # Twilio / WhatsApp
     twilio_account_sid: str = ""
