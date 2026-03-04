@@ -1,5 +1,5 @@
 """
-Centralised OpenAI async client wrapper.
+Centralised AI client wrapper — supports OpenAI and Groq (free).
 All AI calls go through this module so logging, retries, and model
 selection are handled in one place.
 """
@@ -21,8 +21,20 @@ _client: AsyncOpenAI | None = None
 def get_client() -> AsyncOpenAI:
     global _client
     if _client is None:
-        _client = AsyncOpenAI(api_key=settings.openai_api_key)
+        if settings.ai_provider == "groq":
+            _client = AsyncOpenAI(
+                api_key=settings.groq_api_key,
+                base_url="https://api.groq.com/openai/v1",
+            )
+        else:
+            _client = AsyncOpenAI(api_key=settings.openai_api_key)
     return _client
+
+
+def get_model() -> str:
+    if settings.ai_provider == "groq":
+        return settings.groq_model
+    return settings.openai_model
 
 
 async def chat_completion(
@@ -55,7 +67,7 @@ async def chat_completion(
     )
 
     completion = await client.chat.completions.create(
-        model=settings.openai_model,
+        model=get_model(),
         messages=messages,
         temperature=temperature,
         max_tokens=max_tokens,
@@ -72,7 +84,7 @@ async def chat_completion(
         parsed = {"raw": raw}
 
     log_record = {
-        "model": settings.openai_model,
+        "model": get_model(),
         "system_prompt": system_prompt,
         "user_prompt": user_prompt,
         "raw_response": raw,

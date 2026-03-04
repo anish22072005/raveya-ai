@@ -6,9 +6,16 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
+    # AI Provider — supports "openai" or "groq" (free)
+    ai_provider: str = "groq"
+
     # OpenAI
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
+
+    # Groq (free — https://console.groq.com)
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
 
     # Twilio / WhatsApp
     twilio_account_sid: str = ""
