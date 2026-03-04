@@ -107,7 +107,7 @@ async def debug_config():
     """Shows whether critical env vars are configured (values masked)."""
     return {
         "ai_provider": settings.ai_provider,
-        "openai_api_key_set": bool(settings.openai_api_key),
+        "openai_api_key_set": bool(settings.openai_api_key or settings.openai_key),
         "groq_api_key_set": bool(settings.groq_api_key),
         "openai_model": settings.openai_model,
         "mongodb_connected": bool(settings.mongodb_url),

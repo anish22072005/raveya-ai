@@ -27,7 +27,9 @@ def get_client() -> AsyncOpenAI:
                 base_url="https://api.groq.com/openai/v1",
             )
         else:
-            _client = AsyncOpenAI(api_key=settings.openai_api_key)
+            # Support both OPENAI_API_KEY and OPENAI_KEY env var names
+            api_key = settings.openai_api_key or settings.openai_key
+            _client = AsyncOpenAI(api_key=api_key)
     return _client
 
 

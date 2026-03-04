@@ -9,8 +9,9 @@ class Settings(BaseSettings):
     # AI Provider — supports "openai" or "groq" (free)
     ai_provider: str = "openai"
 
-    # OpenAI
-    openai_api_key: str = ""
+    # OpenAI (accepts OPENAI_API_KEY or OPENAI_KEY)
+    openai_api_key: str = ""   # set via OPENAI_API_KEY
+    openai_key: str = ""       # fallback alias set via OPENAI_KEY
     openai_model: str = "gpt-4o-mini"
 
     # Groq (free — https://console.groq.com)
