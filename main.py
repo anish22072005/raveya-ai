@@ -30,17 +30,25 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle."""
     logger.info("Raveya AI starting up — env=%s", settings.app_env)
-    await init_db()
-    logger.info("Database tables initialised.")
+    try:
+        await init_db()
+        logger.info("Database indexes created.")
+    except Exception as exc:
+        logger.warning("init_db failed (non-fatal): %s", exc)
 
-    # Always seed demo data (idempotent — skips existing records)
-    from seed import seed_demo_data
-    await seed_demo_data()
-    logger.info("Demo seed data loaded.")
+    try:
+        from seed import seed_demo_data
+        await seed_demo_data()
+        logger.info("Demo seed data loaded.")
+    except Exception as exc:
+        logger.warning("seed_demo_data failed (non-fatal): %s", exc)
 
     yield
 
-    await close_db()
+    try:
+        await close_db()
+    except Exception:
+        pass
     logger.info("Raveya AI shutting down.")
 
 
