@@ -1,5 +1,5 @@
-﻿"""
-Business logic for Module 2 â€” B2B Proposal Generator.
+"""
+Business logic for Module 2 - B2B Proposal Generator.
 AI calls are isolated to this service; routers contain only HTTP logic.
 """
 import logging
@@ -36,15 +36,15 @@ async def generate_proposal(
         max_tokens=2000,
     )
 
-    # â”€â”€ Persist AI log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Persist AI log
     ai_log = AILogDoc(module="b2b_proposal", **log_record)
     ai_log_result = await db["ai_logs"].insert_one(ai_log.model_dump())
     ai_log_id = str(ai_log_result.inserted_id)
 
-    # â”€â”€ Budget guard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Budget guard
     _validate_and_fix_budget(ai_data, request.budget)
 
-    # â”€â”€ Persist proposal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Persist proposal
     proposal = B2BProposalDoc(
         company_name=request.company_name,
         industry=request.industry,
@@ -61,7 +61,7 @@ async def generate_proposal(
     result = await db["b2b_proposals"].insert_one(proposal.model_dump())
     proposal_id = str(result.inserted_id)
 
-    logger.info("Proposal %s created for '%s' â€” budget â‚¹%.2f", proposal_id, request.company_name, request.budget)
+    logger.info("Proposal %s created for '%s' - budget INR %.2f", proposal_id, request.company_name, request.budget)
     return _build_response(proposal_id, proposal.model_dump(), ai_data)
 
 
@@ -90,13 +90,13 @@ async def list_proposals(db: AsyncIOMotorDatabase, limit: int = 20, offset: int 
     return out
 
 
-# â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Private helpers
 
 def _validate_and_fix_budget(ai_data: dict, max_budget: float) -> None:
     allocation = ai_data.get("budget_allocation", {})
     allocated = float(allocation.get("total_allocated_inr", 0))
     if allocated > max_budget:
-        logger.warning("AI over-allocated â‚¹%.2f vs budget â‚¹%.2f â€” capping.", allocated, max_budget)
+        logger.warning("AI over-allocated INR %.2f vs budget INR %.2f - capping.", allocated, max_budget)
         allocation["total_allocated_inr"] = max_budget
         allocation["remaining_buffer_inr"] = 0.0
         ai_data["budget_allocation"] = allocation
@@ -115,3 +115,5 @@ def _build_response(proposal_id: str, doc: dict, ai_data: dict) -> dict[str, Any
         "cost_breakdown": ai_data.get("cost_breakdown", []),
         "impact_positioning": ai_data.get("impact_positioning", {}),
         "next_steps": ai_data.get("next_steps", []),
+        "created_at": doc["created_at"],
+    }

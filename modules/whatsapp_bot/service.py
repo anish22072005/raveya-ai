@@ -1,11 +1,11 @@
-﻿"""
-Business logic for Module 4 â€” WhatsApp Support Bot.
+"""
+Business logic for Module 4  -  WhatsApp Support Bot.
 
 Flow per message:
 1. Look up customer orders by phone number.
 2. Fetch last 3 conversation turns for context.
 3. Build prompt including real order data.
-4. Call AI â†’ parse intent + generate reply.
+4. Call AI -> parse intent + generate reply.
 5. Log inbound + outbound messages.
 6. Escalate if AI flags it (notify via Twilio).
 7. Return reply to webhook handler.
@@ -79,7 +79,7 @@ async def handle_inbound_message(
 
     if escalate:
         await _trigger_escalation(clean_phone, message_body, escalation_reason)
-        logger.warning("ESCALATION triggered for %s â€” reason: %s", clean_phone, escalation_reason)
+        logger.warning("ESCALATION triggered for %s  -  reason: %s", clean_phone, escalation_reason)
 
     logger.info("WhatsApp [%s] intent=%s escalate=%s confidence=%.2f", clean_phone, intent, escalate, confidence)
 
@@ -134,7 +134,7 @@ async def get_order_status(order_number: str, db: AsyncIOMotorDatabase) -> dict 
     }
 
 
-# â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# -- Private helpers ---------------------------------------------
 
 async def _build_order_context(phone: str, message: str, db: AsyncIOMotorDatabase) -> str:
     lines: list[str] = []
@@ -142,7 +142,7 @@ async def _build_order_context(phone: str, message: str, db: AsyncIOMotorDatabas
     async for o in cursor:
         lines.append(
             f"Order {o['order_number']}: status={o['status']}, items={o['items_summary']}, "
-            f"total=â‚¹{o['total_amount']:.2f}, tracking={o.get('tracking_number') or 'N/A'}, "
+            f"total=INR {o['total_amount']:.2f}, tracking={o.get('tracking_number') or 'N/A'}, "
             f"ETA={o.get('estimated_delivery') or 'N/A'}"
         )
     match = ORDER_PATTERN.search(message)
@@ -152,7 +152,7 @@ async def _build_order_context(phone: str, message: str, db: AsyncIOMotorDatabas
         if extra:
             entry = (
                 f"Order {extra['order_number']}: status={extra['status']}, "
-                f"items={extra['items_summary']}, total=â‚¹{extra['total_amount']:.2f}, "
+                f"items={extra['items_summary']}, total=INR {extra['total_amount']:.2f}, "
                 f"tracking={extra.get('tracking_number') or 'N/A'}, "
                 f"ETA={extra.get('estimated_delivery') or 'N/A'}"
             )
@@ -192,7 +192,7 @@ async def _trigger_escalation(
 ) -> None:
     s = get_settings()
     if not all([s.twilio_account_sid, s.twilio_auth_token, s.escalation_phone]):
-        logger.info("Twilio not configured â€” escalation logged only.")
+        logger.info("Twilio not configured  -  escalation logged only.")
         return
     try:
         from twilio.rest import Client  # type: ignore

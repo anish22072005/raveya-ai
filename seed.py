@@ -1,4 +1,4 @@
-﻿"""
+"""
 Seed demo data into MongoDB for development and testing.
 Run standalone:  python seed.py
 Or called automatically at startup.
@@ -52,7 +52,7 @@ async def seed_demo_data():
     if inserted:
         print(f"Seeded {inserted} demo orders.")
     else:
-        print("Demo orders already present â€” skipped.")
+        print("Demo orders already present  -  skipped.")
 
 
 if __name__ == "__main__":
