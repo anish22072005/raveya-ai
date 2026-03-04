@@ -8,10 +8,12 @@ Modules implemented:
 Architecture outline for remaining modules is in README.md.
 """
 import logging
+import traceback
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from core.config import get_settings
 from core.logger import setup_logging
@@ -31,11 +33,10 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("Database tables initialised.")
 
-    # Seed demo data in development
-    if settings.app_env == "development":
-        from seed import seed_demo_data
-        await seed_demo_data()
-        logger.info("Demo seed data loaded.")
+    # Always seed demo data (idempotent — skips existing records)
+    from seed import seed_demo_data
+    await seed_demo_data()
+    logger.info("Demo seed data loaded.")
 
     yield
 
@@ -63,6 +64,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ── Global exception handler (surfaces real errors) ───────
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception: %s\n%s", exc, traceback.format_exc())
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": type(exc).__name__,
+            "detail": str(exc),
+        },
+    )
+
 # ── Routers ───────────────────────────────────────────────
 app.include_router(proposal_router)
 app.include_router(whatsapp_router)
@@ -85,6 +99,18 @@ async def root():
 @app.get("/health", tags=["Health"])
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/debug/config", tags=["Health"])
+async def debug_config():
+    """Shows whether critical env vars are configured (values masked)."""
+    return {
+        "openai_api_key_set": bool(settings.openai_api_key and settings.openai_api_key != ""),
+        "openai_model": settings.openai_model,
+        "app_env": settings.app_env,
+        "database_url": settings.database_url,
+        "twilio_configured": bool(settings.twilio_account_sid),
+    }
 
 
 if __name__ == "__main__":
