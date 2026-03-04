@@ -3,7 +3,7 @@ services:
   - type: web
     name: raveya-ai
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --prefer-binary -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: AI_PROVIDER
